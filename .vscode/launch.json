@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "LoginRegisterUI",
+            "request": "launch",
+            "mainClass": "LoginRegisterUI",
+            "projectName": "Exam System_50a5d23",
+            "vmArgs": "-cp driver.jar;."
+        }
+    ]
+}

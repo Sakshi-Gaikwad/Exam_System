@@ -1,0 +1,9 @@
+{
+    "java.project.sourcePaths": [
+        "."
+    ],
+    "java.project.referencedLibraries": [
+        "driver.jar"
+    ],
+    "java.format.settings.url": ".vscode/java-formatter.xml"
+}
