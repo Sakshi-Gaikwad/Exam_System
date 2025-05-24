@@ -76,10 +76,40 @@ public class TeacherDashboard extends JFrame {
         editQuestionBtn = new JButton("Edit Question");
         deleteQuestionBtn = new JButton("Delete Question");
         bulkUploadBtn = new JButton("Bulk Upload CSV");
+        JButton deleteSubjectBtn = new JButton("Delete Subject");
         bottomManagePanel.add(bulkUploadBtn);
         bottomManagePanel.add(addQuestionBtn);
         bottomManagePanel.add(editQuestionBtn);
         bottomManagePanel.add(deleteQuestionBtn);
+        bottomManagePanel.add(deleteSubjectBtn);
+
+        // Add ActionListener for deleteSubjectBtn here
+        deleteSubjectBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String selectedSubject = (String) subjectComboManage.getSelectedItem();
+                if (selectedSubject == null) {
+                    JOptionPane.showMessageDialog(null, "Please select a subject to delete.");
+                    return;
+                }
+
+                int confirm = JOptionPane.showConfirmDialog(null,
+                    "Are you sure you want to delete subject: " + selectedSubject + "?",
+                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try (Connection conn = DBConnection.getConnection()) {
+                        PreparedStatement ps = conn.prepareStatement("DELETE FROM subjects WHERE name = ?");
+                        ps.setString(1, selectedSubject);
+                        ps.executeUpdate();
+                        JOptionPane.showMessageDialog(null, "Subject deleted successfully.");
+                        subjectComboManage.removeItem(selectedSubject);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error deleting subject.");
+                    }
+                }
+            }
+        });
 
         manageQuestionsPanel.add(bottomManagePanel, BorderLayout.SOUTH);
 
@@ -167,6 +197,8 @@ public class TeacherDashboard extends JFrame {
         exportScoresBtn.addActionListener(e -> exportScoresToCSV());
         saveSettingsBtn.addActionListener(e -> saveExamSettings());
         refreshReportsBtn.addActionListener(e -> refreshReports());
+    
+
 
         loadQuestionsForSelectedSubject();
         loadScoresWithFilters();
@@ -303,6 +335,8 @@ public class TeacherDashboard extends JFrame {
             }
         }
     }
+    
+
 
     private void bulkUploadQuestions() {
         String subject = (String) subjectComboManage.getSelectedItem();
@@ -314,103 +348,68 @@ public class TeacherDashboard extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV files", "csv");
         fileChooser.setFileFilter(filter);
-        int result = fileChooser.showOpenDialog(this);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File csvFile = fileChooser.getSelectedFile();
-            try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-                String line;
-                int count = 0;
-                Connection conn = DBConnection.getConnection();
-                conn.setAutoCommit(false);
-
-                // Get subject id
-                PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
-                psSubj.setString(1, subject);
-                ResultSet rsSubj = psSubj.executeQuery();
-                if (!rsSubj.next()) {
-                    JOptionPane.showMessageDialog(this, "Selected subject not found.");
-                    conn.close();
-                    return;
-                }
-                int subjectId = rsSubj.getInt("id");
-
-                String insertQuery = "INSERT INTO questions (subject_id, question, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                PreparedStatement psInsert = conn.prepareStatement(insertQuery);
-
-                while ((line = br.readLine()) != null) {
-                    if (line.trim().isEmpty()) continue;
-                    // Expected CSV columns: question, option_a, option_b, option_c, option_d, correct_option
-                    String[] parts = line.split(",");
-                    if (parts.length != 6) {
-                        JOptionPane.showMessageDialog(this, "Invalid CSV format. Each line must have 6 columns.");
-                        conn.rollback();
-                        conn.close();
-                        return;
-                    }
-                    psInsert.setInt(1, subjectId);
-                    psInsert.setString(2, parts[0].trim());
-                    psInsert.setString(3, parts[1].trim());
-                    psInsert.setString(4, parts[2].trim());
-                    psInsert.setString(5, parts[3].trim());
-                    psInsert.setString(6, parts[4].trim());
-                    psInsert.setString(7, parts[5].trim());
-                    psInsert.addBatch();
-                    count++;
-                }
-                psInsert.executeBatch();
-                conn.commit();
-                conn.close();
-                JOptionPane.showMessageDialog(this, count + " questions uploaded successfully.");
-                loadQuestionsForSelectedSubject();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error uploading questions: " + ex.getMessage());
-            }
-        }
+// (Moved deleteSubjectBtn action listener to constructor after button creation)
     }
+
+
+
 
     // View Scores functions
 
-    private void loadScoresWithFilters() {
-        String subject = (String) subjectFilterCombo.getSelectedItem();
-        String studentName = studentFilterField.getText().trim();
+private void loadScoresWithFilters() {
+    String subject = (String) subjectFilterCombo.getSelectedItem();
+    String studentName = studentFilterField.getText().trim();
 
-        scoresTableModel.setRowCount(0);
+    scoresTableModel.setRowCount(0); // Clear previous rows
 
-        try (Connection conn = DBConnection.getConnection()) {
-            StringBuilder query = new StringBuilder("SELECT st.name AS student_name, su.name AS subject_name, sc.score, sc.date FROM scores sc JOIN students st ON sc.student_id = st.id JOIN subjects su ON sc.subject_id = su.id WHERE 1=1");
-            if (subject != null && !subject.equals("All Subjects")) {
-                query.append(" AND su.name = ?");
-            }
-            if (!studentName.isEmpty()) {
-                query.append(" AND st.name LIKE ?");
-            }
-            query.append(" ORDER BY sc.date DESC");
+    try (Connection conn = DBConnection.getConnection()) {
+        StringBuilder query = new StringBuilder(
+            "SELECT st.username AS student_name, su.name AS subject_name, r.score " +
+            "FROM results r " +
+            "JOIN users st ON r.student_id = st.id " +
+            "JOIN subjects su ON r.subject_id = su.id " +
+            "WHERE st.role = 'student'"
+        );
 
-            PreparedStatement ps = conn.prepareStatement(query.toString());
-
-            int paramIndex = 1;
-            if (subject != null && !subject.equals("All Subjects")) {
-                ps.setString(paramIndex++, subject);
-            }
-            if (!studentName.isEmpty()) {
-                ps.setString(paramIndex, "%" + studentName + "%");
-            }
-
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Vector<Object> row = new Vector<>();
-                row.add(rs.getString("student_name"));
-                row.add(rs.getString("subject_name"));
-                row.add(rs.getInt("score"));
-                row.add(rs.getDate("date"));
-                scoresTableModel.addRow(row);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
+            query.append(" AND su.name = ?");
         }
+
+        if (!studentName.isEmpty()) {
+            query.append(" AND st.username LIKE ?");
+        }
+
+        query.append(" ORDER BY r.id DESC");
+
+        PreparedStatement ps = conn.prepareStatement(query.toString());
+
+        int paramIndex = 1;
+        if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
+            ps.setString(paramIndex++, subject);
+        }
+        if (!studentName.isEmpty()) {
+            ps.setString(paramIndex, "%" + studentName + "%");
+        }
+
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector<Object> row = new Vector<>();
+            row.add(rs.getString("student_name"));
+            row.add(rs.getString("subject_name"));
+            row.add(rs.getInt("score"));
+            scoresTableModel.addRow(row);
+        }
+
+        if (scoresTableModel.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "No scores found for the selected filters.");
+        }
+
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "Error loading scores: " + ex.getMessage());
+        ex.printStackTrace();
     }
+}
+
 
     private void exportScoresToCSV() {
         if (scoresTableModel.getRowCount() == 0) {
@@ -446,75 +445,71 @@ public class TeacherDashboard extends JFrame {
             }
         }
     }
+    
 
     // Exam Settings functions
 
-    private void saveExamSettings() {
-        String subject = (String) subjectComboSettings.getSelectedItem();
-        if (subject == null) {
-            JOptionPane.showMessageDialog(this, "Select a subject.");
-            return;
-        }
-        String numQuestionsStr = numQuestionsField.getText().trim();
-        String durationStr = durationField.getText().trim();
-
-        if (numQuestionsStr.isEmpty() || durationStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Enter number of questions and exam duration.");
-            return;
-        }
-
-        int numQuestions, duration;
-        try {
-            numQuestions = Integer.parseInt(numQuestionsStr);
-            duration = Integer.parseInt(durationStr);
-            if (numQuestions <= 0 || duration <= 0) {
-                JOptionPane.showMessageDialog(this, "Numbers must be positive.");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid numbers.");
-            return;
-        }
-
-        try (Connection conn = DBConnection.getConnection()) {
-            // Get subject id
-            PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
-            psSubj.setString(1, subject);
-            ResultSet rsSubj = psSubj.executeQuery();
-            if (!rsSubj.next()) {
-                JOptionPane.showMessageDialog(this, "Subject not found.");
-                return;
-            }
-            int subjectId = rsSubj.getInt("id");
-
-            // Check if exists
-            PreparedStatement psCheck = conn.prepareStatement("SELECT COUNT(*) FROM exam_settings WHERE subject_id = ?");
-            psCheck.setInt(1, subjectId);
-            ResultSet rsCheck = psCheck.executeQuery();
-            boolean exists = false;
-            if (rsCheck.next()) {
-                exists = rsCheck.getInt(1) > 0;
-            }
-
-            if (exists) {
-                PreparedStatement psUpdate = conn.prepareStatement("UPDATE exam_settings SET num_questions = ?, duration = ? WHERE subject_id = ?");
-                psUpdate.setInt(1, numQuestions);
-                psUpdate.setInt(2, duration);
-                psUpdate.setInt(3, subjectId);
-                psUpdate.executeUpdate();
-            } else {
-                PreparedStatement psInsert = conn.prepareStatement("INSERT INTO exam_settings(subject_id, num_questions, duration) VALUES (?, ?, ?)");
-                psInsert.setInt(1, subjectId);
-                psInsert.setInt(2, numQuestions);
-                psInsert.setInt(3, duration);
-                psInsert.executeUpdate();
-            }
-            JOptionPane.showMessageDialog(this, "Exam settings saved.");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to save exam settings.");
-        }
+private void saveExamSettings() {
+    String subject = (String) subjectComboSettings.getSelectedItem();
+    if (subject == null) {
+        JOptionPane.showMessageDialog(this, "Select a subject.");
+        return;
     }
+
+    String numQuestionsStr = numQuestionsField.getText().trim();
+    String durationStr = durationField.getText().trim();
+
+    if (numQuestionsStr.isEmpty() || durationStr.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Enter number of questions and exam duration.");
+        return;
+    }
+
+    int numQuestions, duration;
+    try {
+        numQuestions = Integer.parseInt(numQuestionsStr);
+        duration = Integer.parseInt(durationStr);
+        if (numQuestions <= 0 || duration <= 0) {
+            JOptionPane.showMessageDialog(this, "Numbers must be positive.");
+            return;
+        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Invalid numbers.");
+        return;
+    }
+
+    try (Connection conn = DBConnection.getConnection()) {
+        // Get subject ID
+        PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
+        psSubj.setString(1, subject);
+        ResultSet rsSubj = psSubj.executeQuery();
+        if (!rsSubj.next()) {
+            JOptionPane.showMessageDialog(this, "Subject not found.");
+            return;
+        }
+        int subjectId = rsSubj.getInt("id");
+
+        // Check if settings already exist
+        PreparedStatement psCheck = conn.prepareStatement("SELECT COUNT(*) FROM exam_settings WHERE subject_id = ?");
+        psCheck.setInt(1, subjectId);
+        ResultSet rsCheck = psCheck.executeQuery();
+        if (rsCheck.next() && rsCheck.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(this, "Settings already exist for this subject and cannot be changed.");
+            return;
+        }
+
+        // Insert new settings
+        PreparedStatement psInsert = conn.prepareStatement("INSERT INTO exam_settings(subject_id, num_questions, duration_minutes) VALUES (?, ?, ?)");
+        psInsert.setInt(1, subjectId);
+        psInsert.setInt(2, numQuestions);
+        psInsert.setInt(3, duration);
+        psInsert.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "Exam settings saved successfully.");
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Failed to save exam settings.");
+    }
+}
 
     // Reports functions
 
