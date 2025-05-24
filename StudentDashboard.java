@@ -88,15 +88,38 @@ public class StudentDashboard extends JFrame {
         }
     }
 
-    private void startExam() {
-        String subject = (String) subjectCombo.getSelectedItem();
-        if (subject == null || subject.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please select a subject.");
-            return;
-        }
-        new ExamWindow(studentId, subject);
-        dispose();
+private void startExam() {
+    String subject = (String) subjectCombo.getSelectedItem();
+    if (subject == null || subject.trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please select a subject.");
+        return;
     }
+
+    int duration = 10; // default fallback
+
+    try (Connection conn = DBConnection.getConnection()) {
+        String sql = "SELECT exam_duration FROM subjects WHERE name = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, subject);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    duration = rs.getInt("exam_duration");  // get the duration set by teacher
+                    if(duration <= 0) {
+                        duration = 10; // fallback if value is invalid
+                    }
+                }
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error retrieving exam duration, defaulting to 10 minutes.");
+    }
+
+    // Now start exam with the fetched duration
+    new ExamWindow(studentId, subject);
+    dispose();
+}
+
 
     // Gradient background panel
     class GradientPanel extends JPanel {
