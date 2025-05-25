@@ -54,6 +54,17 @@ public class TeacherDashboard extends JFrame {
         topManagePanel.add(new JLabel("Select Subject:"));
         topManagePanel.add(subjectComboManage);
 
+        JButton backButton = new JButton("Back");
+backButton.addActionListener(e -> {
+    dispose(); // Close TeacherDashboard
+    new LoginRegisterUI().setVisible(true); // Replace with your login/home screen class
+});
+
+// Add to bottom or top (depending on layout)
+add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
+
+        
+
         searchQuestionField = new JTextField(20);
         searchQuestionBtn = new JButton("Search");
         topManagePanel.add(new JLabel("Search:"));
@@ -77,11 +88,14 @@ public class TeacherDashboard extends JFrame {
         deleteQuestionBtn = new JButton("Delete Question");
         bulkUploadBtn = new JButton("Bulk Upload CSV");
         JButton deleteSubjectBtn = new JButton("Delete Subject");
+        JButton addSubjectItem  = new JButton("Add Subject");
+        
         bottomManagePanel.add(bulkUploadBtn);
         bottomManagePanel.add(addQuestionBtn);
         bottomManagePanel.add(editQuestionBtn);
         bottomManagePanel.add(deleteQuestionBtn);
         bottomManagePanel.add(deleteSubjectBtn);
+        bottomManagePanel.add(addSubjectItem);
 
         // Add ActionListener for deleteSubjectBtn here
         deleteSubjectBtn.addActionListener(new ActionListener() {
@@ -110,6 +124,40 @@ public class TeacherDashboard extends JFrame {
                 }
             }
         });
+
+        addSubjectItem.addActionListener(new ActionListener() {
+    public void actionPerformed(ActionEvent e) {
+        String newSubject = JOptionPane.showInputDialog(null, "Enter new subject name:");
+
+        if (newSubject == null || newSubject.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Subject name cannot be empty.");
+            return;
+        }
+
+        try (Connection conn = DBConnection.getConnection()) {
+            // Check if subject already exists
+            PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM subjects WHERE name = ?");
+            checkStmt.setString(1, newSubject.trim());
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Subject already exists.");
+                return;
+            }
+
+            // Insert new subject
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO subjects(name) VALUES (?)");
+            ps.setString(1, newSubject.trim());
+            ps.executeUpdate();
+
+            JOptionPane.showMessageDialog(null, "Subject added successfully.");
+            subjectComboManage.addItem(newSubject.trim()); // Update dropdown if needed
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error adding subject.");
+        }
+    }
+});
+
 
         manageQuestionsPanel.add(bottomManagePanel, BorderLayout.SOUTH);
 
@@ -348,7 +396,59 @@ public class TeacherDashboard extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV files", "csv");
         fileChooser.setFileFilter(filter);
-// (Moved deleteSubjectBtn action listener to constructor after button creation)
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File csvFile = fileChooser.getSelectedFile();
+            try (BufferedReader br = new BufferedReader(new FileReader(csvFile));
+                 Connection conn = DBConnection.getConnection()) {
+
+                // Get subject ID
+                PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
+                psSubj.setString(1, subject);
+                ResultSet rsSubj = psSubj.executeQuery();
+                if (!rsSubj.next()) {
+                    JOptionPane.showMessageDialog(this, "Subject not found.");
+                    return;
+                }
+                int subjectId = rsSubj.getInt("id");
+
+                String line;
+                int count = 0;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(",");
+                    if (parts.length < 6) continue; // skip invalid rows
+
+                    String question = parts[0].trim();
+                    String optionA = parts[1].trim();
+                    String optionB = parts[2].trim();
+                    String optionC = parts[3].trim();
+                    String optionD = parts[4].trim();
+                    String correct = parts[5].trim();
+
+                    if (question.isEmpty() || optionA.isEmpty() || optionB.isEmpty() ||
+                        optionC.isEmpty() || optionD.isEmpty() || correct.isEmpty()) {
+                        continue; // skip incomplete rows
+                    }
+
+                    String insertQuery = "INSERT INTO questions (subject_id, question, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement ps = conn.prepareStatement(insertQuery);
+                    ps.setInt(1, subjectId);
+                    ps.setString(2, question);
+                    ps.setString(3, optionA);
+                    ps.setString(4, optionB);
+                    ps.setString(5, optionC);
+                    ps.setString(6, optionD);
+                    ps.setString(7, correct);
+                    ps.executeUpdate();
+                    count++;
+                }
+                JOptionPane.showMessageDialog(this, count + " questions uploaded successfully.");
+                loadQuestionsForSelectedSubject();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Failed to upload questions.");
+            }
+        }
     }
 
 
@@ -584,6 +684,9 @@ private void saveExamSettings() {
             add(correctOptionCombo);
 
             saveBtn = new JButton("Save");
+            JButton backBtn = new JButton("Back");
+            add(backBtn);
+            backBtn.addActionListener(e -> dispose());
             add(new JLabel());
             add(saveBtn);
 
@@ -673,6 +776,9 @@ private void saveExamSettings() {
             add(correctOptionCombo);
 
             saveBtn = new JButton("Save");
+            JButton backBtn = new JButton("Back");
+            add(backBtn);
+            backBtn.addActionListener(e -> dispose());
             add(new JLabel());
             add(saveBtn);
 
