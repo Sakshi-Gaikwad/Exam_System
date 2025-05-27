@@ -110,6 +110,14 @@ public class TeacherDashboard extends JFrame {
         bulkUploadBtn = new JButton("Bulk Upload CSV");
         JButton deleteSubjectBtn = new JButton("Delete Subject");
         JButton addSubjectItem  = new JButton("Add Subject");
+        Button backButton = new Button("Back");
+backButton.addActionListener(e -> {
+    dispose(); // Close TeacherDashboard
+    new LoginRegisterUI().setVisible(true); // Replace with your login/home screen class
+});
+
+// Add to bottom or top (depending on layout)
+add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
 
         styleButton(addQuestionBtn, new Color(46, 204, 113));
         styleButton(editQuestionBtn, new Color(241, 196, 15));
@@ -131,6 +139,8 @@ public class TeacherDashboard extends JFrame {
         bottomManagePanel.add(deleteQuestionBtn);
         bottomManagePanel.add(deleteSubjectBtn);
         bottomManagePanel.add(addSubjectItem);
+        bottomManagePanel.add(backButton);
+        
 
         deleteSubjectBtn.addActionListener(e -> {
             String selectedSubject = (String) subjectComboManage.getSelectedItem();
