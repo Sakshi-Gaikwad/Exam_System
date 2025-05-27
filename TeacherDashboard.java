@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -37,59 +38,93 @@ public class TeacherDashboard extends JFrame {
     public TeacherDashboard(int teacherId) {
         this.teacherId = teacherId;
 
+        try {
+            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        } catch (Exception e) {
+            // fallback
+        }
+
         setTitle("Teacher Dashboard");
-        setSize(900, 600);
+        setSize(1100, 700);
+        setMinimumSize(new Dimension(950, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        JPanel mainPanel = new GradientPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel title = new JLabel("Teacher Dashboard", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(new Color(44, 62, 80));
+        mainPanel.add(title, BorderLayout.NORTH);
+
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
         // 1. Manage Questions Tab
         JPanel manageQuestionsPanel = new JPanel(new BorderLayout(10, 10));
-        manageQuestionsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        manageQuestionsPanel.setOpaque(false);
+        manageQuestionsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Manage Questions", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 17)));
 
-        JPanel topManagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topManagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        topManagePanel.setOpaque(false);
         subjectComboManage = new JComboBox<>();
+        subjectComboManage.setPreferredSize(new Dimension(200, 30));
         loadSubjects(subjectComboManage);
         topManagePanel.add(new JLabel("Select Subject:"));
         topManagePanel.add(subjectComboManage);
 
-        JButton backButton = new JButton("Back");
-backButton.addActionListener(e -> {
-    dispose(); // Close TeacherDashboard
-    new LoginRegisterUI().setVisible(true); // Replace with your login/home screen class
-});
-
-// Add to bottom or top (depending on layout)
-add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
-
-        
-
         searchQuestionField = new JTextField(20);
         searchQuestionBtn = new JButton("Search");
+        styleButton(searchQuestionBtn, new Color(52, 152, 219));
+        searchQuestionBtn.setToolTipText("Search questions by keyword");
+        topManagePanel.add(Box.createHorizontalStrut(20));
         topManagePanel.add(new JLabel("Search:"));
         topManagePanel.add(searchQuestionField);
         topManagePanel.add(searchQuestionBtn);
 
         manageQuestionsPanel.add(topManagePanel, BorderLayout.NORTH);
 
-        questionsTableModel = new DefaultTableModel(new String[]{"ID", "Question", "Option A", "Option B", "Option C", "Option D", "Correct"}, 0) {
+        questionsTableModel = new DefaultTableModel(
+            new String[]{"ID", "Question", "Option A", "Option B", "Option C", "Option D", "Correct"}, 0) {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
         questionsTable = new JTable(questionsTableModel);
+        questionsTable.setRowHeight(28);
+        questionsTable.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        questionsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        questionsTable.setGridColor(new Color(220, 220, 220));
         JScrollPane scrollQuestions = new JScrollPane(questionsTable);
+        scrollQuestions.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         manageQuestionsPanel.add(scrollQuestions, BorderLayout.CENTER);
 
-        JPanel bottomManagePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottomManagePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        bottomManagePanel.setOpaque(false);
         addQuestionBtn = new JButton("Add Question");
         editQuestionBtn = new JButton("Edit Question");
         deleteQuestionBtn = new JButton("Delete Question");
         bulkUploadBtn = new JButton("Bulk Upload CSV");
         JButton deleteSubjectBtn = new JButton("Delete Subject");
         JButton addSubjectItem  = new JButton("Add Subject");
-        
+
+        styleButton(addQuestionBtn, new Color(46, 204, 113));
+        styleButton(editQuestionBtn, new Color(241, 196, 15));
+        styleButton(deleteQuestionBtn, new Color(231, 76, 60));
+        styleButton(bulkUploadBtn, new Color(52, 152, 219));
+        styleButton(deleteSubjectBtn, new Color(231, 76, 60));
+        styleButton(addSubjectItem, new Color(46, 204, 113));
+
+        addQuestionBtn.setToolTipText("Add a new question to the selected subject");
+        editQuestionBtn.setToolTipText("Edit the selected question");
+        deleteQuestionBtn.setToolTipText("Delete the selected question");
+        bulkUploadBtn.setToolTipText("Bulk upload questions from a CSV file");
+        deleteSubjectBtn.setToolTipText("Delete the selected subject");
+        addSubjectItem.setToolTipText("Add a new subject");
+
         bottomManagePanel.add(bulkUploadBtn);
         bottomManagePanel.add(addQuestionBtn);
         bottomManagePanel.add(editQuestionBtn);
@@ -97,78 +132,67 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
         bottomManagePanel.add(deleteSubjectBtn);
         bottomManagePanel.add(addSubjectItem);
 
-        // Add ActionListener for deleteSubjectBtn here
-        deleteSubjectBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String selectedSubject = (String) subjectComboManage.getSelectedItem();
-                if (selectedSubject == null) {
-                    JOptionPane.showMessageDialog(null, "Please select a subject to delete.");
-                    return;
-                }
-
-                int confirm = JOptionPane.showConfirmDialog(null,
-                    "Are you sure you want to delete subject: " + selectedSubject + "?",
-                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    try (Connection conn = DBConnection.getConnection()) {
-                        PreparedStatement ps = conn.prepareStatement("DELETE FROM subjects WHERE name = ?");
-                        ps.setString(1, selectedSubject);
-                        ps.executeUpdate();
-                        JOptionPane.showMessageDialog(null, "Subject deleted successfully.");
-                        subjectComboManage.removeItem(selectedSubject);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Error deleting subject.");
-                    }
+        deleteSubjectBtn.addActionListener(e -> {
+            String selectedSubject = (String) subjectComboManage.getSelectedItem();
+            if (selectedSubject == null) {
+                JOptionPane.showMessageDialog(null, "Please select a subject to delete.");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(null,
+                "Are you sure you want to delete subject: " + selectedSubject + "?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                try (Connection conn = DBConnection.getConnection()) {
+                    PreparedStatement ps = conn.prepareStatement("DELETE FROM subjects WHERE name = ?");
+                    ps.setString(1, selectedSubject);
+                    ps.executeUpdate();
+                    JOptionPane.showMessageDialog(null, "Subject deleted successfully.");
+                    subjectComboManage.removeItem(selectedSubject);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error deleting subject.");
                 }
             }
         });
 
-        addSubjectItem.addActionListener(new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-        String newSubject = JOptionPane.showInputDialog(null, "Enter new subject name:");
-
-        if (newSubject == null || newSubject.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Subject name cannot be empty.");
-            return;
-        }
-
-        try (Connection conn = DBConnection.getConnection()) {
-            // Check if subject already exists
-            PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM subjects WHERE name = ?");
-            checkStmt.setString(1, newSubject.trim());
-            ResultSet rs = checkStmt.executeQuery();
-            if (rs.next() && rs.getInt(1) > 0) {
-                JOptionPane.showMessageDialog(null, "Subject already exists.");
+        addSubjectItem.addActionListener(e -> {
+            String newSubject = JOptionPane.showInputDialog(null, "Enter new subject name:");
+            if (newSubject == null || newSubject.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Subject name cannot be empty.");
                 return;
             }
-
-            // Insert new subject
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO subjects(name) VALUES (?)");
-            ps.setString(1, newSubject.trim());
-            ps.executeUpdate();
-
-            JOptionPane.showMessageDialog(null, "Subject added successfully.");
-            subjectComboManage.addItem(newSubject.trim()); // Update dropdown if needed
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error adding subject.");
-        }
-    }
-});
-
+            try (Connection conn = DBConnection.getConnection()) {
+                PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM subjects WHERE name = ?");
+                checkStmt.setString(1, newSubject.trim());
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    JOptionPane.showMessageDialog(null, "Subject already exists.");
+                    return;
+                }
+                PreparedStatement ps = conn.prepareStatement("INSERT INTO subjects(name) VALUES (?)");
+                ps.setString(1, newSubject.trim());
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(null, "Subject added successfully.");
+                subjectComboManage.addItem(newSubject.trim());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error adding subject.");
+            }
+        });
 
         manageQuestionsPanel.add(bottomManagePanel, BorderLayout.SOUTH);
-
         tabbedPane.addTab("Manage Questions", manageQuestionsPanel);
 
         // 2. View Scores Tab
         JPanel viewScoresPanel = new JPanel(new BorderLayout(10, 10));
-        viewScoresPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        viewScoresPanel.setOpaque(false);
+        viewScoresPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "View Scores", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 17)));
 
-        JPanel topScoresPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topScoresPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        topScoresPanel.setOpaque(false);
         subjectFilterCombo = new JComboBox<>();
+        subjectFilterCombo.setPreferredSize(new Dimension(200, 30));
         loadSubjects(subjectFilterCombo);
         subjectFilterCombo.insertItemAt("All Subjects", 0);
         subjectFilterCombo.setSelectedIndex(0);
@@ -176,6 +200,8 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
         studentFilterField = new JTextField(15);
         filterScoresBtn = new JButton("Filter");
         exportScoresBtn = new JButton("Export CSV");
+        styleButton(filterScoresBtn, new Color(52, 152, 219));
+        styleButton(exportScoresBtn, new Color(46, 204, 113));
 
         topScoresPanel.add(new JLabel("Subject:"));
         topScoresPanel.add(subjectFilterCombo);
@@ -186,27 +212,37 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
 
         viewScoresPanel.add(topScoresPanel, BorderLayout.NORTH);
 
-        scoresTableModel = new DefaultTableModel(new String[]{"Student Name", "Subject", "Score", "Date"}, 0) {
+        scoresTableModel = new DefaultTableModel(
+            new String[]{"Student Name", "Subject", "Score", "Date"}, 0) {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
         scoresTable = new JTable(scoresTableModel);
+        scoresTable.setRowHeight(28);
+        scoresTable.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        scoresTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        scoresTable.setGridColor(new Color(220, 220, 220));
         JScrollPane scrollScores = new JScrollPane(scoresTable);
+        scrollScores.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         viewScoresPanel.add(scrollScores, BorderLayout.CENTER);
 
         tabbedPane.addTab("View Scores", viewScoresPanel);
 
         // 3. Exam Settings Tab
         JPanel examSettingsPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-        examSettingsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        examSettingsPanel.setOpaque(false);
+        examSettingsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Exam Settings", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 17)));
 
         subjectComboSettings = new JComboBox<>();
+        subjectComboSettings.setPreferredSize(new Dimension(200, 30));
         loadSubjects(subjectComboSettings);
 
         numQuestionsField = new JTextField();
         durationField = new JTextField();
         saveSettingsBtn = new JButton("Save Settings");
+        styleButton(saveSettingsBtn, new Color(52, 152, 219));
 
         examSettingsPanel.add(new JLabel("Select Subject:"));
         examSettingsPanel.add(subjectComboSettings);
@@ -221,18 +257,23 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
 
         // 4. Reports & Analytics Tab
         JPanel reportsPanel = new JPanel(new BorderLayout(10, 10));
-        reportsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        reportsPanel.setOpaque(false);
+        reportsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Reports & Analytics", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 17)));
         reportsArea = new JTextArea();
         reportsArea.setEditable(false);
+        reportsArea.setFont(new Font("Consolas", Font.PLAIN, 15));
         JScrollPane reportsScroll = new JScrollPane(reportsArea);
         refreshReportsBtn = new JButton("Refresh Reports");
+        styleButton(refreshReportsBtn, new Color(52, 152, 219));
 
         reportsPanel.add(reportsScroll, BorderLayout.CENTER);
         reportsPanel.add(refreshReportsBtn, BorderLayout.SOUTH);
 
         tabbedPane.addTab("Reports & Analytics", reportsPanel);
 
-        add(tabbedPane);
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        setContentPane(mainPanel);
 
         // Listeners and initial data loading
         subjectComboManage.addActionListener(e -> loadQuestionsForSelectedSubject());
@@ -245,14 +286,37 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
         exportScoresBtn.addActionListener(e -> exportScoresToCSV());
         saveSettingsBtn.addActionListener(e -> saveExamSettings());
         refreshReportsBtn.addActionListener(e -> refreshReports());
-    
-
 
         loadQuestionsForSelectedSubject();
         loadScoresWithFilters();
         refreshReports();
 
         setVisible(true);
+    }
+
+    // Gradient background panel (like LoginRegisterUI)
+    class GradientPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            Color color1 = new Color(230, 240, 255);
+            Color color2 = new Color(200, 220, 250);
+            int width = getWidth();
+            int height = getHeight();
+            GradientPaint gp = new GradientPaint(0, 0, color1, 0, height, color2);
+            g2d.setPaint(gp);
+            g2d.fillRect(0, 0, width, height);
+        }
+    }
+
+    // Utility to style buttons
+    private void styleButton(JButton btn, Color bg) {
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBorder(BorderFactory.createEmptyBorder(6, 16, 6, 16));
     }
 
     private void loadSubjects(JComboBox<String> combo) {
@@ -383,8 +447,6 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
             }
         }
     }
-    
-
 
     private void bulkUploadQuestions() {
         String subject = (String) subjectComboManage.getSelectedItem();
@@ -451,65 +513,61 @@ add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
         }
     }
 
-
-
-
     // View Scores functions
 
-private void loadScoresWithFilters() {
-    String subject = (String) subjectFilterCombo.getSelectedItem();
-    String studentName = studentFilterField.getText().trim();
+    private void loadScoresWithFilters() {
+        String subject = (String) subjectFilterCombo.getSelectedItem();
+        String studentName = studentFilterField.getText().trim();
 
-    scoresTableModel.setRowCount(0); // Clear previous rows
+        scoresTableModel.setRowCount(0); // Clear previous rows
 
-    try (Connection conn = DBConnection.getConnection()) {
-        StringBuilder query = new StringBuilder(
-            "SELECT st.username AS student_name, su.name AS subject_name, r.score " +
-            "FROM results r " +
-            "JOIN users st ON r.student_id = st.id " +
-            "JOIN subjects su ON r.subject_id = su.id " +
-            "WHERE st.role = 'student'"
-        );
+        try (Connection conn = DBConnection.getConnection()) {
+            StringBuilder query = new StringBuilder(
+                "SELECT st.username AS student_name, su.name AS subject_name, r.score " +
+                "FROM results r " +
+                "JOIN users st ON r.student_id = st.id " +
+                "JOIN subjects su ON r.subject_id = su.id " +
+                "WHERE st.role = 'student'"
+            );
 
-        if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
-            query.append(" AND su.name = ?");
+            if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
+                query.append(" AND su.name = ?");
+            }
+
+            if (!studentName.isEmpty()) {
+                query.append(" AND st.username LIKE ?");
+            }
+
+            query.append(" ORDER BY r.id DESC");
+
+            PreparedStatement ps = conn.prepareStatement(query.toString());
+
+            int paramIndex = 1;
+            if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
+                ps.setString(paramIndex++, subject);
+            }
+            if (!studentName.isEmpty()) {
+                ps.setString(paramIndex, "%" + studentName + "%");
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getString("student_name"));
+                row.add(rs.getString("subject_name"));
+                row.add(rs.getInt("score"));
+                scoresTableModel.addRow(row);
+            }
+
+            if (scoresTableModel.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(this, "No scores found for the selected filters.");
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error loading scores: " + ex.getMessage());
+            ex.printStackTrace();
         }
-
-        if (!studentName.isEmpty()) {
-            query.append(" AND st.username LIKE ?");
-        }
-
-        query.append(" ORDER BY r.id DESC");
-
-        PreparedStatement ps = conn.prepareStatement(query.toString());
-
-        int paramIndex = 1;
-        if (subject != null && !"All Subjects".equalsIgnoreCase(subject)) {
-            ps.setString(paramIndex++, subject);
-        }
-        if (!studentName.isEmpty()) {
-            ps.setString(paramIndex, "%" + studentName + "%");
-        }
-
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            Vector<Object> row = new Vector<>();
-            row.add(rs.getString("student_name"));
-            row.add(rs.getString("subject_name"));
-            row.add(rs.getInt("score"));
-            scoresTableModel.addRow(row);
-        }
-
-        if (scoresTableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "No scores found for the selected filters.");
-        }
-
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "Error loading scores: " + ex.getMessage());
-        ex.printStackTrace();
     }
-}
-
 
     private void exportScoresToCSV() {
         if (scoresTableModel.getRowCount() == 0) {
@@ -545,71 +603,70 @@ private void loadScoresWithFilters() {
             }
         }
     }
-    
 
     // Exam Settings functions
 
-private void saveExamSettings() {
-    String subject = (String) subjectComboSettings.getSelectedItem();
-    if (subject == null) {
-        JOptionPane.showMessageDialog(this, "Select a subject.");
-        return;
-    }
-
-    String numQuestionsStr = numQuestionsField.getText().trim();
-    String durationStr = durationField.getText().trim();
-
-    if (numQuestionsStr.isEmpty() || durationStr.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Enter number of questions and exam duration.");
-        return;
-    }
-
-    int numQuestions, duration;
-    try {
-        numQuestions = Integer.parseInt(numQuestionsStr);
-        duration = Integer.parseInt(durationStr);
-        if (numQuestions <= 0 || duration <= 0) {
-            JOptionPane.showMessageDialog(this, "Numbers must be positive.");
-            return;
-        }
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "Invalid numbers.");
-        return;
-    }
-
-    try (Connection conn = DBConnection.getConnection()) {
-        // Get subject ID
-        PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
-        psSubj.setString(1, subject);
-        ResultSet rsSubj = psSubj.executeQuery();
-        if (!rsSubj.next()) {
-            JOptionPane.showMessageDialog(this, "Subject not found.");
-            return;
-        }
-        int subjectId = rsSubj.getInt("id");
-
-        // Check if settings already exist
-        PreparedStatement psCheck = conn.prepareStatement("SELECT COUNT(*) FROM exam_settings WHERE subject_id = ?");
-        psCheck.setInt(1, subjectId);
-        ResultSet rsCheck = psCheck.executeQuery();
-        if (rsCheck.next() && rsCheck.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(this, "Settings already exist for this subject and cannot be changed.");
+    private void saveExamSettings() {
+        String subject = (String) subjectComboSettings.getSelectedItem();
+        if (subject == null) {
+            JOptionPane.showMessageDialog(this, "Select a subject.");
             return;
         }
 
-        // Insert new settings
-        PreparedStatement psInsert = conn.prepareStatement("INSERT INTO exam_settings(subject_id, num_questions, duration_minutes) VALUES (?, ?, ?)");
-        psInsert.setInt(1, subjectId);
-        psInsert.setInt(2, numQuestions);
-        psInsert.setInt(3, duration);
-        psInsert.executeUpdate();
+        String numQuestionsStr = numQuestionsField.getText().trim();
+        String durationStr = durationField.getText().trim();
 
-        JOptionPane.showMessageDialog(this, "Exam settings saved successfully.");
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Failed to save exam settings.");
+        if (numQuestionsStr.isEmpty() || durationStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Enter number of questions and exam duration.");
+            return;
+        }
+
+        int numQuestions, duration;
+        try {
+            numQuestions = Integer.parseInt(numQuestionsStr);
+            duration = Integer.parseInt(durationStr);
+            if (numQuestions <= 0 || duration <= 0) {
+                JOptionPane.showMessageDialog(this, "Numbers must be positive.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid numbers.");
+            return;
+        }
+
+        try (Connection conn = DBConnection.getConnection()) {
+            // Get subject ID
+            PreparedStatement psSubj = conn.prepareStatement("SELECT id FROM subjects WHERE name = ?");
+            psSubj.setString(1, subject);
+            ResultSet rsSubj = psSubj.executeQuery();
+            if (!rsSubj.next()) {
+                JOptionPane.showMessageDialog(this, "Subject not found.");
+                return;
+            }
+            int subjectId = rsSubj.getInt("id");
+
+            // Check if settings already exist
+            PreparedStatement psCheck = conn.prepareStatement("SELECT COUNT(*) FROM exam_settings WHERE subject_id = ?");
+            psCheck.setInt(1, subjectId);
+            ResultSet rsCheck = psCheck.executeQuery();
+            if (rsCheck.next() && rsCheck.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this, "Settings already exist for this subject and cannot be changed.");
+                return;
+            }
+
+            // Insert new settings
+            PreparedStatement psInsert = conn.prepareStatement("INSERT INTO exam_settings(subject_id, num_questions, duration_minutes) VALUES (?, ?, ?)");
+            psInsert.setInt(1, subjectId);
+            psInsert.setInt(2, numQuestions);
+            psInsert.setInt(3, duration);
+            psInsert.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Exam settings saved successfully.");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to save exam settings.");
+        }
     }
-}
 
     // Reports functions
 
