@@ -711,14 +711,15 @@ public class TeacherDashboard extends JFrame {
 
     // --- Redesigned AddQuestionWindow ---
     private class AddQuestionWindow extends JFrame {
-        private JTextField questionField, optionAField, optionBField, optionCField, optionDField;
+        private JTextArea questionArea;
+        private JTextField optionAField, optionBField, optionCField, optionDField;
         private JComboBox<String> correctOptionCombo;
         private JButton saveBtn;
 
         public AddQuestionWindow(String subject, int teacherId) {
             setTitle("Add New Question");
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setSize(500, 480);
+            setSize(600, 540);
             setLocationRelativeTo(TeacherDashboard.this);
             setResizable(false);
 
@@ -741,15 +742,20 @@ public class TeacherDashboard extends JFrame {
 
             formPanel.add(new JLabel("Question:"), gbc);
             gbc.gridx = 1;
-            questionField = new JTextField();
-            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            formPanel.add(questionField, gbc);
+            questionArea = new JTextArea(4, 36);
+            questionArea.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            questionArea.setLineWrap(true);
+            questionArea.setWrapStyleWord(true);
+            JScrollPane questionScroll = new JScrollPane(questionArea);
+            questionScroll.setPreferredSize(new Dimension(400, 80));
+            formPanel.add(questionScroll, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
             formPanel.add(new JLabel("Option A:"), gbc);
             gbc.gridx = 1;
             optionAField = new JTextField();
             optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionAField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionAField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -757,6 +763,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionBField = new JTextField();
             optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionBField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionBField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -764,6 +771,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionCField = new JTextField();
             optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionCField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionCField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -771,6 +779,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionDField = new JTextField();
             optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionDField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionDField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -799,7 +808,7 @@ public class TeacherDashboard extends JFrame {
         }
 
         private void saveQuestion(String subject) {
-            String qText = questionField.getText().trim();
+            String qText = questionArea.getText().trim();
             String a = optionAField.getText().trim();
             String b = optionBField.getText().trim();
             String c = optionCField.getText().trim();
@@ -844,7 +853,8 @@ public class TeacherDashboard extends JFrame {
     // --- Redesigned EditQuestionWindow ---
     private class EditQuestionWindow extends JFrame {
         private int questionId;
-        private JTextField questionField, optionAField, optionBField, optionCField, optionDField;
+        private JTextArea questionArea;
+        private JTextField optionAField, optionBField, optionCField, optionDField;
         private JComboBox<String> correctOptionCombo;
         private JButton saveBtn;
 
@@ -852,7 +862,7 @@ public class TeacherDashboard extends JFrame {
             this.questionId = questionId;
             setTitle("Edit Question");
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setSize(500, 480);
+            setSize(600, 540);
             setLocationRelativeTo(TeacherDashboard.this);
             setResizable(false);
 
@@ -875,15 +885,20 @@ public class TeacherDashboard extends JFrame {
 
             formPanel.add(new JLabel("Question:"), gbc);
             gbc.gridx = 1;
-            questionField = new JTextField();
-            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            formPanel.add(questionField, gbc);
+            questionArea = new JTextArea(4, 36);
+            questionArea.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            questionArea.setLineWrap(true);
+            questionArea.setWrapStyleWord(true);
+            JScrollPane questionScroll = new JScrollPane(questionArea);
+            questionScroll.setPreferredSize(new Dimension(400, 80));
+            formPanel.add(questionScroll, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
             formPanel.add(new JLabel("Option A:"), gbc);
             gbc.gridx = 1;
             optionAField = new JTextField();
             optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionAField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionAField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -891,6 +906,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionBField = new JTextField();
             optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionBField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionBField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -898,6 +914,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionCField = new JTextField();
             optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionCField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionCField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -905,6 +922,7 @@ public class TeacherDashboard extends JFrame {
             gbc.gridx = 1;
             optionDField = new JTextField();
             optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            optionDField.setPreferredSize(new Dimension(400, 32));
             formPanel.add(optionDField, gbc);
 
             gbc.gridy++; gbc.gridx = 0;
@@ -940,7 +958,7 @@ public class TeacherDashboard extends JFrame {
                 ps.setInt(1, questionId);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
-                    questionField.setText(rs.getString("question"));
+                    questionArea.setText(rs.getString("question"));
                     optionAField.setText(rs.getString("option_a"));
                     optionBField.setText(rs.getString("option_b"));
                     optionCField.setText(rs.getString("option_c"));
@@ -956,7 +974,7 @@ public class TeacherDashboard extends JFrame {
         }
 
         private void saveEditedQuestion() {
-            String qText = questionField.getText().trim();
+            String qText = questionArea.getText().trim();
             String a = optionAField.getText().trim();
             String b = optionBField.getText().trim();
             String c = optionCField.getText().trim();
