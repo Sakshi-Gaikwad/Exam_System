@@ -55,16 +55,67 @@ public class ExamWindow extends JFrame {
         timeRemaining = durationMinutes * 60; // convert minutes to seconds
 
         setTitle("Exam Window - " + subjectName);
-        setSize(800, 450);  // Increased width to accommodate left panel
+        setSize(800, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
+        // Main panel with gradient background
+        JPanel mainPanel = new GradientPanel();
+        mainPanel.setLayout(new BorderLayout());
+
+        // Timer label at top
+        timerLabel = new JLabel("Time left: " + formatTime(timeRemaining), SwingConstants.CENTER);
+        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        timerLabel.setForeground(new Color(44, 62, 80));
+        timerLabel.setBorder(BorderFactory.createEmptyBorder(18, 0, 10, 0));
+        mainPanel.add(timerLabel, BorderLayout.NORTH);
+
+        // Left panel for progress info
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setOpaque(false);
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 10));
+        leftPanel.setPreferredSize(new Dimension(220, 0));
+
+        totalQuestionsLabel = new JLabel("Total Questions: 0");
+        answeredLabel = new JLabel("Answered: 0");
+        remainingLabel = new JLabel("Remaining: 0");
+
+        Font progressFont = new Font("Segoe UI", Font.BOLD, 15);
+        totalQuestionsLabel.setFont(progressFont);
+        answeredLabel.setFont(progressFont);
+        remainingLabel.setFont(progressFont);
+
+        leftPanel.add(totalQuestionsLabel);
+        leftPanel.add(Box.createVerticalStrut(30));
+        leftPanel.add(answeredLabel);
+        leftPanel.add(Box.createVerticalStrut(30));
+        leftPanel.add(remainingLabel);
+
+        // Right panel for question and options
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setOpaque(false);
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
+
         questionLabel = new JLabel();
-        timerLabel = new JLabel("Time left: " + formatTime(timeRemaining));
+        questionLabel.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        questionLabel.setForeground(new Color(44, 62, 80));
+        questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        rightPanel.add(questionLabel);
+        rightPanel.add(Box.createVerticalStrut(25));
+
         optionA = new JRadioButton();
         optionB = new JRadioButton();
         optionC = new JRadioButton();
         optionD = new JRadioButton();
+
+        Font optionFont = new Font("Segoe UI", Font.PLAIN, 15);
+        optionA.setFont(optionFont);
+        optionB.setFont(optionFont);
+        optionC.setFont(optionFont);
+        optionD.setFont(optionFont);
 
         optionsGroup = new ButtonGroup();
         optionsGroup.add(optionA);
@@ -72,43 +123,38 @@ public class ExamWindow extends JFrame {
         optionsGroup.add(optionC);
         optionsGroup.add(optionD);
 
-        JButton nextButton = new JButton("Next");
-        nextButton.addActionListener(e -> checkAndLoadNext());
-
-        JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        optionsPanel.setOpaque(false);
         optionsPanel.add(optionA);
+        optionsPanel.add(Box.createVerticalStrut(10));
         optionsPanel.add(optionB);
+        optionsPanel.add(Box.createVerticalStrut(10));
         optionsPanel.add(optionC);
+        optionsPanel.add(Box.createVerticalStrut(10));
         optionsPanel.add(optionD);
 
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        rightPanel.add(questionLabel, BorderLayout.NORTH);
-        rightPanel.add(optionsPanel, BorderLayout.CENTER);
-        rightPanel.add(nextButton, BorderLayout.SOUTH);
-        rightPanel.add(timerLabel, BorderLayout.PAGE_START);
+        rightPanel.add(optionsPanel);
+        rightPanel.add(Box.createVerticalStrut(30));
 
-        // Left panel for progress info
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        leftPanel.setPreferredSize(new Dimension(220, 0));  // fix width
+        JButton nextButton = new JButton("Next");
+        nextButton.setBackground(new Color(52, 152, 219));
+        nextButton.setForeground(Color.WHITE);
+        nextButton.setFocusPainted(false);
+        nextButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        nextButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nextButton.addActionListener(e -> checkAndLoadNext());
 
-        totalQuestionsLabel = new JLabel("Total Questions: 0");
-        answeredLabel = new JLabel("Answered: 0");
-        remainingLabel = new JLabel("Remaining: 0");
+        rightPanel.add(nextButton);
 
-        leftPanel.add(totalQuestionsLabel);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        leftPanel.add(answeredLabel);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        leftPanel.add(remainingLabel);
-
+        // Split pane for left and right
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         splitPane.setDividerLocation(230);
         splitPane.setEnabled(false); // Prevent user from changing divider
 
-        add(splitPane);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+
+        add(mainPanel);
 
         loadQuestions();
         if (questions.size() == 0) {
@@ -168,7 +214,7 @@ public class ExamWindow extends JFrame {
 
     private void displayQuestion() {
         Question q = questions.get(currentQuestionIndex);
-        questionLabel.setText("Q" + (currentQuestionIndex + 1) + ": " + q.text);
+        questionLabel.setText("<html>Q" + (currentQuestionIndex + 1) + ": " + q.text + "</html>");
         optionA.setText("A. " + q.optionA);
         optionB.setText("B. " + q.optionB);
         optionC.setText("C. " + q.optionC);
@@ -193,8 +239,6 @@ public class ExamWindow extends JFrame {
                 }
                 updateProgressLabels();
             }
-        } else {
-            // User didn't select any option, treat as unanswered - no score change
         }
 
         currentQuestionIndex++;
@@ -219,7 +263,21 @@ public class ExamWindow extends JFrame {
     }
 
     private void submitExam() {
+        // Prevent duplicate result insert (should not happen, but extra safety)
         try (Connection conn = DBConnection.getConnection()) {
+            String checkSql = "SELECT COUNT(*) FROM results WHERE student_id = ? AND subject_id = ?";
+            try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+                checkPs.setInt(1, studentId);
+                checkPs.setInt(2, subjectId);
+                try (ResultSet rs = checkPs.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        JOptionPane.showMessageDialog(this, "You have already submitted this exam.");
+                        dispose();
+                        return;
+                    }
+                }
+            }
+
             String query = "INSERT INTO results (student_id, subject_id, score) VALUES (?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, studentId);
@@ -247,6 +305,22 @@ public class ExamWindow extends JFrame {
             ex.printStackTrace();
         }
         return -1;
+    }
+
+    // Gradient background panel
+    class GradientPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            Color color1 = new Color(230, 240, 255);
+            Color color2 = new Color(200, 220, 250);
+            int width = getWidth();
+            int height = getHeight();
+            GradientPaint gp = new GradientPaint(0, 0, color1, 0, height, color2);
+            g2d.setPaint(gp);
+            g2d.fillRect(0, 0, width, height);
+        }
     }
 
     class Question {

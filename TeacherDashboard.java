@@ -110,14 +110,15 @@ public class TeacherDashboard extends JFrame {
         bulkUploadBtn = new JButton("Bulk Upload CSV");
         JButton deleteSubjectBtn = new JButton("Delete Subject");
         JButton addSubjectItem  = new JButton("Add Subject");
-        Button backButton = new Button("Back");
-        backButton.addActionListener(e -> {
-            dispose(); // Close TeacherDashboard
-            new LoginRegisterUI().setVisible(true); // Replace with your login/home screen class
-        });
 
-        // Add to bottom or top (depending on layout)
-        add(backButton, BorderLayout.SOUTH); // Or NORTH if needed
+        // Add Back button
+        JButton backButton = new JButton("Back");
+        styleButton(backButton, new Color(149, 165, 166));
+        backButton.setToolTipText("Return to Login/Home");
+        backButton.addActionListener(e -> {
+            dispose();
+            new LoginRegisterUI().setVisible(true);
+        });
 
         styleButton(addQuestionBtn, new Color(46, 204, 113));
         styleButton(editQuestionBtn, new Color(241, 196, 15));
@@ -133,13 +134,13 @@ public class TeacherDashboard extends JFrame {
         deleteSubjectBtn.setToolTipText("Delete the selected subject");
         addSubjectItem.setToolTipText("Add a new subject");
 
+        bottomManagePanel.add(backButton);
         bottomManagePanel.add(bulkUploadBtn);
         bottomManagePanel.add(addQuestionBtn);
         bottomManagePanel.add(editQuestionBtn);
         bottomManagePanel.add(deleteQuestionBtn);
         bottomManagePanel.add(deleteSubjectBtn);
         bottomManagePanel.add(addSubjectItem);
-        bottomManagePanel.add(backButton);
 
         deleteSubjectBtn.addActionListener(e -> {
             String selectedSubject = (String) subjectComboManage.getSelectedItem();
@@ -713,125 +714,91 @@ public class TeacherDashboard extends JFrame {
         private JTextField questionField, optionAField, optionBField, optionCField, optionDField;
         private JComboBox<String> correctOptionCombo;
         private JButton saveBtn;
-        private String subject;
-        private int teacherId;
 
         public AddQuestionWindow(String subject, int teacherId) {
-            this.subject = subject;
-            this.teacherId = teacherId;
-            setTitle("Add Question - " + subject);
-            setSize(430, 420);
-            setResizable(false);
-            setLocationRelativeTo(TeacherDashboard.this);
+            setTitle("Add New Question");
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setSize(500, 480);
+            setLocationRelativeTo(TeacherDashboard.this);
+            setResizable(false);
 
-            JPanel panel = new JPanel(new GridBagLayout());
+            JPanel panel = new JPanel(new BorderLayout());
             panel.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
             panel.setBackground(Color.WHITE);
 
+            JLabel header = new JLabel("Add New Question", SwingConstants.CENTER);
+            header.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            header.setForeground(new Color(44, 62, 80));
+            panel.add(header, BorderLayout.NORTH);
+
+            JPanel formPanel = new JPanel(new GridBagLayout());
+            formPanel.setOpaque(false);
             GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(7, 5, 7, 5);
+            gbc.insets = new Insets(8, 8, 8, 8);
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.gridwidth = 2;
 
-            JLabel header = new JLabel("Add New Question", SwingConstants.CENTER);
-            header.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            panel.add(header, gbc);
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
-            panel.add(new JLabel(" "), gbc); // Spacer
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
-            JLabel qLabel = new JLabel("Question:");
-            qLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(qLabel, gbc);
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
+            formPanel.add(new JLabel("Question:"), gbc);
+            gbc.gridx = 1;
             questionField = new JTextField();
-            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(questionField, gbc);
+            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(questionField, gbc);
 
-            gbc.gridy++;
-            gbc.gridwidth = 1;
-            JLabel aLabel = new JLabel("Option A:");
-            aLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(aLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option A:"), gbc);
             gbc.gridx = 1;
             optionAField = new JTextField();
-            optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionAField, gbc);
+            optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionAField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel bLabel = new JLabel("Option B:");
-            bLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(bLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option B:"), gbc);
             gbc.gridx = 1;
             optionBField = new JTextField();
-            optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionBField, gbc);
+            optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionBField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel cLabel = new JLabel("Option C:");
-            cLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(cLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option C:"), gbc);
             gbc.gridx = 1;
             optionCField = new JTextField();
-            optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionCField, gbc);
+            optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionCField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel dLabel = new JLabel("Option D:");
-            dLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(dLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option D:"), gbc);
             gbc.gridx = 1;
             optionDField = new JTextField();
-            optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionDField, gbc);
+            optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionDField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel correctLabel = new JLabel("Correct Option:");
-            correctLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(correctLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Correct Option:"), gbc);
             gbc.gridx = 1;
             correctOptionCombo = new JComboBox<>(new String[]{"A", "B", "C", "D"});
-            correctOptionCombo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(correctOptionCombo, gbc);
+            correctOptionCombo.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(correctOptionCombo, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            gbc.gridwidth = 2;
-            gbc.insets = new Insets(18, 5, 5, 5);
+            panel.add(formPanel, BorderLayout.CENTER);
+
             JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 0));
+            btnPanel.setOpaque(false);
             saveBtn = new JButton("Save");
             styleButton(saveBtn, new Color(46, 204, 113));
-            JButton backBtn = new JButton("Cancel");
-            styleButton(backBtn, new Color(231, 76, 60));
-            btnPanel.setOpaque(false);
+            JButton cancelBtn = new JButton("Cancel");
+            styleButton(cancelBtn, new Color(231, 76, 60));
             btnPanel.add(saveBtn);
-            btnPanel.add(backBtn);
-            panel.add(btnPanel, gbc);
+            btnPanel.add(cancelBtn);
+            panel.add(btnPanel, BorderLayout.SOUTH);
 
-            backBtn.addActionListener(e -> dispose());
-            saveBtn.addActionListener(e -> saveQuestion());
+            cancelBtn.addActionListener(e -> dispose());
+            saveBtn.addActionListener(e -> saveQuestion(subject));
 
             setContentPane(panel);
         }
 
-        private void saveQuestion() {
+        private void saveQuestion(String subject) {
             String qText = questionField.getText().trim();
             String a = optionAField.getText().trim();
             String b = optionBField.getText().trim();
@@ -884,112 +851,82 @@ public class TeacherDashboard extends JFrame {
         public EditQuestionWindow(int questionId) {
             this.questionId = questionId;
             setTitle("Edit Question");
-            setSize(430, 420);
-            setResizable(false);
-            setLocationRelativeTo(TeacherDashboard.this);
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setSize(500, 480);
+            setLocationRelativeTo(TeacherDashboard.this);
+            setResizable(false);
 
-            JPanel panel = new JPanel(new GridBagLayout());
+            JPanel panel = new JPanel(new BorderLayout());
             panel.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
             panel.setBackground(Color.WHITE);
 
+            JLabel header = new JLabel("Edit Question", SwingConstants.CENTER);
+            header.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            header.setForeground(new Color(44, 62, 80));
+            panel.add(header, BorderLayout.NORTH);
+
+            JPanel formPanel = new JPanel(new GridBagLayout());
+            formPanel.setOpaque(false);
             GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(7, 5, 7, 5);
+            gbc.insets = new Insets(8, 8, 8, 8);
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.gridwidth = 2;
 
-            JLabel header = new JLabel("Edit Question", SwingConstants.CENTER);
-            header.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            panel.add(header, gbc);
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
-            panel.add(new JLabel(" "), gbc); // Spacer
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
-            JLabel qLabel = new JLabel("Question:");
-            qLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(qLabel, gbc);
-
-            gbc.gridy++;
-            gbc.gridwidth = 2;
+            formPanel.add(new JLabel("Question:"), gbc);
+            gbc.gridx = 1;
             questionField = new JTextField();
-            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(questionField, gbc);
+            questionField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(questionField, gbc);
 
-            gbc.gridy++;
-            gbc.gridwidth = 1;
-            JLabel aLabel = new JLabel("Option A:");
-            aLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(aLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option A:"), gbc);
             gbc.gridx = 1;
             optionAField = new JTextField();
-            optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionAField, gbc);
+            optionAField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionAField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel bLabel = new JLabel("Option B:");
-            bLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(bLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option B:"), gbc);
             gbc.gridx = 1;
             optionBField = new JTextField();
-            optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionBField, gbc);
+            optionBField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionBField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel cLabel = new JLabel("Option C:");
-            cLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(cLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option C:"), gbc);
             gbc.gridx = 1;
             optionCField = new JTextField();
-            optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionCField, gbc);
+            optionCField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionCField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel dLabel = new JLabel("Option D:");
-            dLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(dLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Option D:"), gbc);
             gbc.gridx = 1;
             optionDField = new JTextField();
-            optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(optionDField, gbc);
+            optionDField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(optionDField, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            JLabel correctLabel = new JLabel("Correct Option:");
-            correctLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            panel.add(correctLabel, gbc);
-
+            gbc.gridy++; gbc.gridx = 0;
+            formPanel.add(new JLabel("Correct Option:"), gbc);
             gbc.gridx = 1;
             correctOptionCombo = new JComboBox<>(new String[]{"A", "B", "C", "D"});
-            correctOptionCombo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            panel.add(correctOptionCombo, gbc);
+            correctOptionCombo.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            formPanel.add(correctOptionCombo, gbc);
 
-            gbc.gridy++;
-            gbc.gridx = 0;
-            gbc.gridwidth = 2;
-            gbc.insets = new Insets(18, 5, 5, 5);
+            panel.add(formPanel, BorderLayout.CENTER);
+
             JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 0));
+            btnPanel.setOpaque(false);
             saveBtn = new JButton("Save");
             styleButton(saveBtn, new Color(241, 196, 15));
-            JButton backBtn = new JButton("Cancel");
-            styleButton(backBtn, new Color(231, 76, 60));
-            btnPanel.setOpaque(false);
+            JButton cancelBtn = new JButton("Cancel");
+            styleButton(cancelBtn, new Color(231, 76, 60));
             btnPanel.add(saveBtn);
-            btnPanel.add(backBtn);
-            panel.add(btnPanel, gbc);
+            btnPanel.add(cancelBtn);
+            panel.add(btnPanel, BorderLayout.SOUTH);
 
-            backBtn.addActionListener(e -> dispose());
+            cancelBtn.addActionListener(e -> dispose());
             saveBtn.addActionListener(e -> saveEditedQuestion());
 
             setContentPane(panel);

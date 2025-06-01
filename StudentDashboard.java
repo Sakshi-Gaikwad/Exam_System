@@ -12,7 +12,7 @@ public class StudentDashboard extends JFrame {
         this.studentId = studentId;
 
         setTitle("Student Dashboard");
-        setSize(450, 300);
+        setSize(450, 350);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -24,46 +24,62 @@ public class StudentDashboard extends JFrame {
         }
 
         JPanel mainPanel = new GradientPanel();
-        mainPanel.setLayout(new BorderLayout(10, 10));
+        mainPanel.setLayout(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel title = new JLabel("Student Dashboard", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        JLabel title = new JLabel("Welcome Student", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
         title.setForeground(new Color(44, 62, 80));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        JPanel centerPanel = new JPanel(new GridLayout(3, 1, 15, 15));
+        // Center Panel with BoxLayout
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
 
+        // Form Panel
+        JPanel formPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        formPanel.setOpaque(false);
+        formPanel.setMaximumSize(new Dimension(400, 60));
+        formPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel subjectLabel = new JLabel("Select Subject:");
-        subjectLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        subjectLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         subjectCombo = new JComboBox<>();
         loadSubjects();
 
-        centerPanel.add(subjectLabel);
-        centerPanel.add(subjectCombo);
+        formPanel.add(subjectLabel);
+        formPanel.add(subjectCombo);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setOpaque(false);
+        buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         startExamBtn = new JButton("Start Exam");
         startExamBtn.setBackground(new Color(52, 152, 219));
         startExamBtn.setForeground(Color.WHITE);
-        startExamBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         startExamBtn.setFocusPainted(false);
-        centerPanel.add(startExamBtn);
-
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-
-        JPanel bottomPanel = new JPanel();
-        bottomPanel.setOpaque(false);
+        startExamBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         backButton = new JButton("Back");
         backButton.setBackground(new Color(231, 76, 60));
         backButton.setForeground(Color.WHITE);
-        backButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         backButton.setFocusPainted(false);
+        backButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        bottomPanel.add(backButton);
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        buttonPanel.add(startExamBtn);
+        buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPanel.add(backButton);
+
+        // Add form and buttons to center
+        centerPanel.add(Box.createVerticalStrut(30));
+        centerPanel.add(formPanel);
+        centerPanel.add(Box.createVerticalStrut(30));
+        centerPanel.add(buttonPanel);
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         add(mainPanel);
 
@@ -88,38 +104,56 @@ public class StudentDashboard extends JFrame {
         }
     }
 
-private void startExam() {
-    String subject = (String) subjectCombo.getSelectedItem();
-    if (subject == null || subject.trim().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Please select a subject.");
-        return;
-    }
+    private void startExam() {
+        String subject = (String) subjectCombo.getSelectedItem();
+        if (subject == null || subject.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please select a subject.");
+            return;
+        }
 
-    int duration = 10; // default fallback
-
-    try (Connection conn = DBConnection.getConnection()) {
-        String sql = "SELECT exam_duration FROM subjects WHERE name = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, subject);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    duration = rs.getInt("exam_duration");  // get the duration set by teacher
-                    if(duration <= 0) {
-                        duration = 10; // fallback if value is invalid
+        // Check if student already attempted this subject
+        try (Connection conn = DBConnection.getConnection()) {
+            String checkSql = "SELECT COUNT(*) FROM results r JOIN subjects s ON r.subject_id = s.id WHERE r.student_id = ? AND s.name = ?";
+            try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                ps.setInt(1, studentId);
+                ps.setString(2, subject);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        JOptionPane.showMessageDialog(this, "You have already attempted this subject. Only one attempt is allowed.");
+                        return;
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error checking previous attempts.");
+            return;
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error retrieving exam duration, defaulting to 10 minutes.");
+
+        int duration = 10; // default fallback
+
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "SELECT exam_duration FROM subjects WHERE name = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, subject);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        duration = rs.getInt("exam_duration");  // get the duration set by teacher
+                        if(duration <= 0) {
+                            duration = 10; // fallback if value is invalid
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error retrieving exam duration, defaulting to 10 minutes.");
+        }
+
+        // Now start exam with the fetched duration
+        new ExamWindow(studentId, subject);
+        dispose();
     }
-
-    // Now start exam with the fetched duration
-    new ExamWindow(studentId, subject);
-    dispose();
-}
-
 
     // Gradient background panel
     class GradientPanel extends JPanel {
